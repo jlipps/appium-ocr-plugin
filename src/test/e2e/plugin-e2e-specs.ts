@@ -1,5 +1,5 @@
 import type { RemoteOptions, Browser } from 'webdriverio'
-import type { OcrResponse } from '../..'
+import { OCR_CONTEXT, OcrResponse } from '../..'
 import { remote } from 'webdriverio'
 import { command } from 'webdriver'
 import { expect } from 'earljs'
@@ -60,6 +60,24 @@ describe('AppiumOcrPlugin', function() {
         expect(lines[0].bbox.x1).toBeGreaterThan(0)
         expect(lines[0].bbox.y0).toBeGreaterThan(0)
         expect(lines[0].bbox.y1).toBeGreaterThan(0)
+    })
+
+    it('should add a new context to the context list', async function() {
+        const contexts = await driver.getContexts()
+        expect(contexts).toBeAContainerWith(OCR_CONTEXT)
+    })
+
+    it('should get the ocr text in xml format when in the ocr context', async function() {
+        await driver.switchContext(OCR_CONTEXT)
+        const source = await driver.getPageSource()
+        console.log(source)
+        try {
+            expect(source).toEqual(expect.stringMatching('<OCR>'))
+            expect(source).toEqual(expect.stringMatching('<words>'))
+            expect(source).toEqual(expect.stringMatching('<lines>'))
+        } finally {
+            await driver.switchContext('NATIVE_APP')
+        }
     })
 
     after(async function() {
