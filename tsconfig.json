@@ -1,0 +1,19 @@
+{
+    "include": ["src/**/*"],
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "outDir": "build",
+        "strict": true,
+        "inlineSourceMap": true,
+        "allowJs": false,
+        "declaration": true,
+        "esModuleInterop": true,
+        "moduleResolution": "Node",
+        "module": "CommonJS",
+        "target": "ES2015",
+        "types": ["node", "mocha", "webdriverio/async"]
+    },
+    "watchOptions": {
+        "excludeDirectories": ["**/node_modules/**", "build"]
+    }
+}
