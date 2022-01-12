@@ -70,7 +70,6 @@ describe('AppiumOcrPlugin', function() {
     it('should get the ocr text in xml format when in the ocr context', async function() {
         await driver.switchContext(OCR_CONTEXT)
         const source = await driver.getPageSource()
-        console.log(source)
         try {
             expect(source).toEqual(expect.stringMatching('<OCR>'))
             expect(source).toEqual(expect.stringMatching('<words>'))
