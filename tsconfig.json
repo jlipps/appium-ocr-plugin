@@ -11,6 +11,7 @@
         "moduleResolution": "Node",
         "module": "CommonJS",
         "target": "ES2015",
+        "lib": ["dom"],
         "types": ["node", "mocha", "webdriverio/async"]
     },
     "watchOptions": {

@@ -1,6 +1,7 @@
 import type { RemoteOptions, Browser } from 'webdriverio'
 import { OCR_CONTEXT, OcrResponse } from '../..'
 import { remote } from 'webdriverio'
+import type { Element } from 'webdriverio'
 import { command } from 'webdriver'
 import { expect } from 'earljs'
 
@@ -50,8 +51,7 @@ describe('AppiumOcrPlugin', function() {
     })
 
     it('should find texts via new endpoint', async function() {
-        const loginScreen = await driver.$('~Login Screen')
-        await loginScreen.waitForExist({ timeout: 5000 })
+        await driver.$('~Login Screen').waitForExist({ timeout: 5000 })
         const ocr = await driver.getOcrText()
         const lines = ocr.lines.filter((l) => l.text.includes('Login Screen'))
         expect(lines).toBeAnArrayOfLength(1)
@@ -67,16 +67,85 @@ describe('AppiumOcrPlugin', function() {
         expect(contexts).toBeAContainerWith(OCR_CONTEXT)
     })
 
-    it('should get the ocr text in xml format when in the ocr context', async function() {
-        await driver.switchContext(OCR_CONTEXT)
-        const source = await driver.getPageSource()
-        try {
+    describe('when in the ocr context', function() {
+        before(async function() {
+            await driver.switchContext(OCR_CONTEXT)
+        })
+
+        after(async function() {
+            await driver.switchContext('NATIVE_APP')
+        })
+
+        it('should get the ocr text in xml format', async function() {
+            const source = await driver.getPageSource()
             expect(source).toEqual(expect.stringMatching('<OCR>'))
             expect(source).toEqual(expect.stringMatching('<words>'))
             expect(source).toEqual(expect.stringMatching('<lines>'))
-        } finally {
-            await driver.switchContext('NATIVE_APP')
-        }
+        })
+
+        it('should find single ocr elements by xpath', async function() {
+            const el = await driver.$('//lines/item[contains(text(), "Login Screen")]')
+        })
+
+        it('should find multiple ocr elements by xpath', async function() {
+            const els = await driver.$$('//lines/item[contains(text(), "Demo")]')
+            expect(els.length).toEqual(6)
+        })
+
+        it('should not find elements that do not exist', async function() {
+            const els = await driver.$$('//item[contains(text(), "ZZZZ")]')
+            expect(els.length).toEqual(0)
+        })
+
+        describe('with an element', function() {
+            let el: Element<'async'>
+            const targetSize = {
+                width: expect.numberCloseTo(101, { delta: 5 }),
+                height: expect.numberCloseTo(16, { delta: 5 })
+            }
+            const targetLoc = {
+                x: expect.numberCloseTo(21, { delta: 5 }),
+                y: expect.numberCloseTo(197, { delta: 5 }),
+            }
+            before(async function() {
+                el = await driver.$('//lines/item[contains(text(), "Login Screen")]')
+            })
+
+            it('should get displayed', async function() {
+                expect(await el.isDisplayed()).toEqual(true)
+            })
+
+            it('should get the size', async function() {
+                expect(await el.getSize()).toEqual(targetSize)
+            })
+
+            it('should get the location', async function() {
+                expect(await el.getLocation()).toEqual(targetLoc)
+            })
+
+            it('should get the rect', async function() {
+                expect(await driver.getElementRect(el.elementId)).toEqual({...targetSize, ...targetLoc})
+            })
+
+            it('should get the text', async function() {
+                expect(await el.getText()).toEqual(expect.stringMatching('Login Screen'))
+            })
+
+            it('should get the confidence attribute', async function() {
+                const confidence = parseInt(await el.getAttribute('confidence'), 10)
+                expect(confidence).toBeGreaterThan(50)
+            })
+
+            it('should click via w3c actions', async function() {
+                await el.click()
+                await driver.switchContext('NATIVE_APP')
+                const username = await driver.$('~username')
+                await username.waitForExist({ timeout: 2000 })
+                await driver.back()
+            })
+
+        })
+
     })
 
     after(async function() {
