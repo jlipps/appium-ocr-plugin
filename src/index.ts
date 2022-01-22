@@ -2,6 +2,7 @@ import BasePlugin from '@appium/base-plugin'
 import type { BaseDriver } from '@appium/base-driver'
 import { createWorker, Worker, Word, Line, Block, Bbox, Page, PSM } from 'tesseract.js'
 import path from 'path'
+import { imageUtil } from '@appium/support'
 import {
     shouldAvoidProxy,
     getContexts,
@@ -22,8 +23,33 @@ import {
 } from './commands'
 import { OCRElement } from './commands/element'
 
+// Tesseract allows language codes to prime the OCR engine. Set the default to just English. Can be
+// overridden with the 'ocrLanguage' driver setting
 const DEFAULT_LANG = 'eng'
-const CACHE_PATH = path.resolve(__dirname) // cache trained data in the build dir
+
+// cache trained data in the build dir
+const CACHE_PATH = path.resolve(__dirname)
+
+// Sometimes the screenshot a platform returns can have a different number of pixels than the
+// reported screen dimensions. We need screenshot pixels and screen pixels to match so that when we
+// go to construct actions based on OCR locations from the screenshot, the screen locations for the
+// actions are correct. The number here is "how many times bigger is the screenshot than the
+// reported screen dimensions". These values can be overridden by the 'ocrShotToScreenRatio' driver
+// setting
+const SHOT_TO_SCREEN_RATIOS: Record<string, number> = {
+    ios: 3.12,
+    android: 1.0,
+}
+
+// The OCR process is much slower the bigger the screenshot is, so set some defaults for how much
+// we want to downsample the screenshot to make things faster. The number here represents "by what
+// factor should we reduce the dimension?" These values can be overridden by the
+// 'ocrDownsampleFactor' driver setting. A value of null means "don't reduce"
+const DOWNSAMPLE_FACTORS: Record<string, number | null> = {
+    ios: SHOT_TO_SCREEN_RATIOS.ios,
+    android: null,
+}
+
 export const OCR_CONTEXT = 'OCR'
 
 export type NextHandler = () => Promise<any>
@@ -126,8 +152,33 @@ export class AppiumOcrPlugin extends BasePlugin {
             throw new Error(`This type of driver does not have a screenshot command defined; ` +
                             `screenshot taking is necessary for this plugin to work!`)
         }
+        const platform = driver.opts.platformName.toLowerCase()
+
         const b64Screenshot = await driver.getScreenshot()
-        const image = Buffer.from(b64Screenshot, 'base64')
+        let image = Buffer.from(b64Screenshot, 'base64')
+
+        let shotToScreenRatio = (driver.settings.getSettings().ocrShotToScreenRatio as number) ||
+            SHOT_TO_SCREEN_RATIOS[platform] ||
+            1.0
+        this.logger.info(`Using ${shotToScreenRatio} as the screenshot-to-screen size ratio`)
+
+        const downsampleFactor = (driver.settings.getSettings().ocrDownsampleFactor as number) ||
+            DOWNSAMPLE_FACTORS[platform] ||
+            null
+
+        if (downsampleFactor) {
+            this.logger.info(`Using downsample factor of ${downsampleFactor}`)
+            const jimpImage = await imageUtil.getJimpImage(image)
+            const { width: curWidth, height: curHeight } = jimpImage.bitmap
+            const newWidth = curWidth / downsampleFactor
+            const newHeight = curHeight / downsampleFactor
+            this.logger.info(`Resizing image from ${curWidth}x${curHeight} to ${newWidth}x${newHeight}`)
+            const resizedImage = await jimpImage.resize(newWidth, newHeight)
+            image = await resizedImage.getBuffer(imageUtil.MIME_PNG)
+
+            shotToScreenRatio = shotToScreenRatio / downsampleFactor
+            this.logger.info(`Adjusting screenshot-to-screen size ratio to ${shotToScreenRatio} to account for downsampling`)
+        }
 
         if (!this.isWorkerReady) {
             await this.readyWorker(driver)
@@ -135,10 +186,6 @@ export class AppiumOcrPlugin extends BasePlugin {
 
         const { data } = await this.worker.recognize(image)
 
-        const defaultShotToScreenRatio = driver.opts.platformName.toLowerCase() === 'ios' ? 3.12 : 1.0
-        let shotToScreenRatio = driver.settings.getSettings().ocrShotToScreenRatio as number
-        shotToScreenRatio = shotToScreenRatio || defaultShotToScreenRatio
-        this.logger.info(`Using ${shotToScreenRatio} as the screenshot-to-screen size ratio`)
 
         return this.getOcrDataFromResponse(data, shotToScreenRatio)
     }
