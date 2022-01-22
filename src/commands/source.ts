@@ -26,7 +26,7 @@ function converOcrToXml(ocr: OcrResponse): string {
     const lines = `\t<lines>\n${lineNodes}\n\t</lines>`
     const blocks = `\t<blocks>\n${blockNodes}\n\t</blocks>`
 
-    return `<?xml version="1.0" encoding="utf-8"?>` +
+    return `<?xml version="1.0" encoding="utf-8"?>\n` +
            `<OCR>\n${words}\n${lines}\n${blocks}\n</OCR>`
 }
 
