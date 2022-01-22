@@ -112,6 +112,15 @@ When in the OCR context, you have access to a single locator strategy: `xpath`. 
 * `Get Element Text`: returns the text discovered via the OCR (same text as in the page source output)
 * `Get Element Attribute`: only one attribute (`confidence`) can be retrieved, and it returns the confidence value
 
+As an example of how this might be used, assuming we're in the OCR context and that the page source matches the example above, we could do the following (in WebdriverIO; adjust as appropriate for other client libraries):
+
+```js
+const element = await driver.$('//lines/item[text() = "Echo Box"]')
+await element.click()
+```
+
+This clicks the center of the screen region where Tesseract has found the "Echo Box" text line to be located.
+
 ## Development
 
 PRs welcomed!
