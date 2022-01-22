@@ -5,7 +5,7 @@
     "appium",
     "ocr"
   ],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Jonathan Lipps <jlipps@gmail.com>",
   "license": "Apache-2.0",
   "repository": {
@@ -29,7 +29,10 @@
   },
   "files": [
     "src",
-    "build",
+    "build/commands",
+    "build/test",
+    "build/index.js",
+    "build/index.d.ts",
     "README",
     "LICENSE"
   ],
