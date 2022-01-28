@@ -6,6 +6,7 @@ import { command } from 'webdriver'
 import { expect } from 'earljs'
 
 const TEST_APP_PATH = process.env.TEST_APP_PATH
+const TEST_PLATFORM = process.env.TEST_PLATFORM || 'iOS'
 
 if (!TEST_APP_PATH) {
     throw new Error(`Must define TEST_APP_PATH`)
@@ -15,13 +16,27 @@ interface PluginDriver extends Browser<'async'> {
     getOcrText: () => Promise<OcrResponse>
 }
 
-const capabilities = {
-    platformName: 'iOS',
-    'appium:automationName': 'XCUITest',
+let capabilities: {[k: string]: any} = {
     'appium:noReset': true,
     'appium:app': TEST_APP_PATH,
-    'appium:platformVersion': '15.2',
-    'appium:deviceName': 'iPhone 13',
+}
+
+if (TEST_PLATFORM === 'iOS') {
+    capabilities = {
+        ...capabilities,
+        platformName: 'iOS',
+        'appium:automationName': 'XCUITest',
+        'appium:platformVersion': '15.2',
+        'appium:deviceName': 'iPhone 13',
+    }
+} else {
+    capabilities = {
+        ...capabilities,
+        platformName: 'Android',
+        'appium:automationName': 'UiAutomator2',
+        'appium:deviceName': 'Android',
+        'appium:settings[ocrDownsampleFactor]': 2.43,
+    }
 }
 
 const WDIO_PARAMS: RemoteOptions = {

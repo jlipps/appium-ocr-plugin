@@ -50,6 +50,8 @@ const DOWNSAMPLE_FACTORS: Record<string, number | null> = {
     android: null,
 }
 
+const DEFAULT_CONTRAST = 0.5
+
 export const OCR_CONTEXT = 'OCR'
 
 export type NextHandler = () => Promise<any>
@@ -156,6 +158,7 @@ export class AppiumOcrPlugin extends BasePlugin {
 
         const b64Screenshot = await driver.getScreenshot()
         let image = Buffer.from(b64Screenshot, 'base64')
+        let jimpImage = await imageUtil.getJimpImage(image)
 
         let shotToScreenRatio = (driver.settings.getSettings().ocrShotToScreenRatio as number) ||
             SHOT_TO_SCREEN_RATIOS[platform] ||
@@ -166,9 +169,21 @@ export class AppiumOcrPlugin extends BasePlugin {
             DOWNSAMPLE_FACTORS[platform] ||
             null
 
+        const shouldInvertColors = (driver.settings.getSettings().ocrInvertColors as boolean) ||
+            false
+
+        const contrast = (driver.settings.getSettings().ocrContrast as number) ||
+            DEFAULT_CONTRAST
+
+        // convert to grayscale and apply contrast to make it easier for tesseract
+        jimpImage = await jimpImage.greyscale().contrast(contrast)
+
+        if (shouldInvertColors) {
+            jimpImage = await jimpImage.invert()
+        }
+
         if (downsampleFactor) {
             this.logger.info(`Using downsample factor of ${downsampleFactor}`)
-            const jimpImage = await imageUtil.getJimpImage(image)
             const { width: curWidth, height: curHeight } = jimpImage.bitmap
             const newWidth = curWidth / downsampleFactor
             const newHeight = curHeight / downsampleFactor
@@ -183,6 +198,8 @@ export class AppiumOcrPlugin extends BasePlugin {
         if (!this.isWorkerReady) {
             await this.readyWorker(driver)
         }
+
+        require('fs').writeFileSync('/Users/jlipps/Desktop/test.png', image)
 
         const { data } = await this.worker.recognize(image)
 

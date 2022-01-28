@@ -121,6 +121,19 @@ await element.click()
 
 This clicks the center of the screen region where Tesseract has found the "Echo Box" text line to be located.
 
+### Settings
+
+Sometimes it will be necessary to tweak the operation of the plugin in various ways. These settings are available to you to do that. You can either set them as capabilities (e.g., `appium:settings[<settingName>] = <settingValue>`) or use your client library's settings update functionality (e.g., `driver.updateSettings(...)`).
+
+|Setting name|Description|Default|
+|------------|-----------|-------|
+|`ocrShotToScreenRatio`|(Number) Sometimes, the dimensions of the screenshot returned by a platform differ from the screen coordinates used by the platform. In this case, conversion is required so that returned locations match the actual screen locations, not the pixel locations of the screenshot image. The number her corresponds to the factor by which the screenshot has been enlarged relative to the screen coordinates.|`3.12` for iOS, `1.0` otherwise|
+|`ocrDownsampleFactor`|(Number) how much you would like to shrink the screenshot before performing OCR on it. The reason to do this would be to try to speed up the OCR algorithm. `1.0` means no shrinking, and `2.0` means shrinking by a factor of 2.|`3.12` for iOS, `null` otherwise|
+|`ocrInvertColors`|(Boolean) If you are dealing with a dark mode screen you may want to invert the colors as Tesseract mostly expects light background and dark text.|`false`|
+|`ocrContrast`|(Number) by default this plugin will attempt to increase the contrast in the image for a better OCR result. You can set this to a value between `-1.0` (maximum reduce contrast) and `1.0` (maximum increase contrast). `0.0` means to perform no contrast adjustment at all.|`0.5`|
+|`ocrLanguage`|(String) a `+`-separated list of language names for Tesseract to download training data for.|`'eng'`|
+|`ocrValidChars`|(String) a list of characters for Tesseract to consider during OCR; `''` means all characters. You can fill out your own list if you know you only expect certain characters, and it might improve accuracy and reliability.|`''`|
+
 ## Development
 
 PRs welcomed!
