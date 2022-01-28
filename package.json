@@ -37,6 +37,7 @@
     "LICENSE"
   ],
   "dependencies": {
+    "@appium/base-driver": "^8.2.3",
     "@appium/base-plugin": "^1.8.0",
     "@appium/support": "^2.55.3",
     "lodash": "^4.17.21",
@@ -52,7 +53,6 @@
     "test:e2e": "mocha -t 60000 ./build/test/e2e/*-specs.js"
   },
   "devDependencies": {
-    "@appium/base-driver": "^8.2.3",
     "@types/express": "^4.17.13",
     "@types/lodash": "^4.14.178",
     "@types/mocha": "^9.0.0",
