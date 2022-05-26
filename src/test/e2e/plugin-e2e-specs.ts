@@ -26,7 +26,7 @@ if (TEST_PLATFORM === 'iOS') {
         ...capabilities,
         platformName: 'iOS',
         'appium:automationName': 'XCUITest',
-        'appium:platformVersion': '15.2',
+        'appium:platformVersion': '15.4',
         'appium:deviceName': 'iPhone 13',
     }
 } else {
