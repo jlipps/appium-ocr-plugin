@@ -73,7 +73,7 @@ export class AppiumOcrPlugin extends BasePlugin {
     worker: Worker
     isInOcrContext = false
     isWorkerReady = false
-    ocrElements: {[id: string]: OCRElement}
+    ocrElements: { [id: string]: OCRElement }
 
     shouldAvoidProxy = shouldAvoidProxy
     getContexts = getContexts
@@ -152,7 +152,7 @@ export class AppiumOcrPlugin extends BasePlugin {
     async getOcrText(_: NextHandler, driver: BaseDriver): Promise<OcrResponse> {
         if (!driver.getScreenshot) {
             throw new Error(`This type of driver does not have a screenshot command defined; ` +
-                            `screenshot taking is necessary for this plugin to work!`)
+                `screenshot taking is necessary for this plugin to work!`)
         }
         const platform = driver.opts.platformName.toLowerCase()
 
@@ -199,10 +199,7 @@ export class AppiumOcrPlugin extends BasePlugin {
             await this.readyWorker(driver)
         }
 
-        require('fs').writeFileSync('/Users/jlipps/Desktop/test.png', image)
-
         const { data } = await this.worker.recognize(image)
-
 
         return this.getOcrDataFromResponse(data, shotToScreenRatio)
     }

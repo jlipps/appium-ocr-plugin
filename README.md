@@ -34,6 +34,25 @@ browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr
 }))
 ```
 
+Also for reference, here is how to add the command to the python-appium-client:
+```py
+class OCRCommand(ExtensionBase):
+    def method_name(self):
+        return 'ocr_command'
+
+    def ocr_command(self, argument):
+        return self.execute(argument)['value']
+
+    def add_command(self):
+        return ('post', '/session/$sessionId/appium/ocr')
+
+...
+
+# Load the driver with the extension and run the command
+driver = webdriver.Remote("http://127.0.0.1:4723", caps, extensions=[OCRCommand])
+result = driver.ocr_command({})
+```
+
 ## Activation
 
 The plugin will not be active unless turned on when invoking the Appium server:
@@ -142,11 +161,12 @@ PRs welcomed!
 
 1. Clone repo
 2. `npm install`
+3. `npx tsc`
 
 ### Run tests
 
 1. Link this repo into an Appium server (e.g., `appium plugin install --source=local $(pwd)` from this plugin development directory)
 2. Start the Appium server (e.g., `appium --use-plugins=ocr`)
-3. export the `TEST_APP_PATH` env var to a path to TheApp.app.zip
+3. export the `TEST_APP_PATH` env var to a path to TheApp.app.zip (https://github.com/cloudgrey-io/the-app/releases)
 4. `npm run test:unit`
 5. `npm run test:e2e`
