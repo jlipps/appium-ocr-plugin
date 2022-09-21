@@ -58,7 +58,7 @@ result = driver.ocr_command({})
 The plugin will not be active unless turned on when invoking the Appium server:
 
 ```
-appium --use-plugins=images
+appium --use-plugins=ocr
 ```
 
 ## Usage
