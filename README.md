@@ -34,8 +34,14 @@ browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr
 }))
 ```
 
-Also for reference, here is how to add the command to the python-appium-client:
+Also for reference, here is how you might add the command to the Appium python client:
+
 ```py
+from appium import webdriver
+from appium.webdriver.webdriver import ExtensionBase
+
+
+# define an extension class
 class OCRCommand(ExtensionBase):
     def method_name(self):
         return 'ocr_command'
@@ -46,11 +52,18 @@ class OCRCommand(ExtensionBase):
     def add_command(self):
         return ('post', '/session/$sessionId/appium/ocr')
 
-...
 
-# Load the driver with the extension and run the command
-driver = webdriver.Remote("http://127.0.0.1:4723", caps, extensions=[OCRCommand])
+caps = {
+    # set up your actual capabilities
+}
+
+# Load the driver with the extension
+driver = webdriver.Remote("http://127.0.0.1:4723", desired_capabilities=caps, extensions=[OCRCommand])
+
+# now you can use `driver.ocr_command`
 result = driver.ocr_command({})
+
+driver.quit()
 ```
 
 ## Activation
