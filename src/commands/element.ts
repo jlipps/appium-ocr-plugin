@@ -77,14 +77,14 @@ export async function click(this: AppiumOcrPlugin, next: NextHandler, driver: Ex
         this.logger.info(`Will tap on image element at coordinate [${x}, ${y}]`)
 
         const action = {
-            type: 'pointer',
+            type: 'pointer' as const,
             id: 'mouse',
-            parameters: {pointerType: 'touch'},
+            parameters: {pointerType: 'touch' as const},
             actions: [
-                {type: 'pointerMove', x, y, duration: 0},
-                {type: 'pointerDown', button: 0},
-                {type: 'pause', duration: TAP_DURATION_MS},
-                {type: 'pointerUp', button: 0},
+                {type: 'pointerMove' as const, x, y, duration: 0},
+                {type: 'pointerDown' as const, button: 0},
+                {type: 'pause' as const, duration: TAP_DURATION_MS},
+                {type: 'pointerUp' as const, button: 0},
             ]
         }
 

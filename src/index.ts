@@ -1,5 +1,6 @@
-import BasePlugin from 'appium/plugin'
+import { BasePlugin } from 'appium/plugin'
 import type { ExternalDriver } from '@appium/types'
+import type Jimp from 'jimp'
 import { createWorker, Worker, Word, Line, Block, Bbox, Page, PSM } from 'tesseract.js'
 import path from 'path'
 import { imageUtil } from 'appium/support'
@@ -22,6 +23,8 @@ import {
     _find,
 } from './commands'
 import { OCRElement } from './commands/element'
+
+type AppiumJimp = Omit<Jimp,'getBuffer'> & {getBuffer: Jimp['getBufferAsync']}
 
 // Tesseract allows language codes to prime the OCR engine. Set the default to just English. Can be
 // overridden with the 'ocrLanguage' driver setting
@@ -154,6 +157,11 @@ export class AppiumOcrPlugin extends BasePlugin {
             throw new Error(`This type of driver does not have a screenshot command defined; ` +
                 `screenshot taking is necessary for this plugin to work!`)
         }
+
+        if (!driver.opts.platformName) {
+            throw new Error(`Driver did not have platformName capability/opt defined`)
+        }
+
         const platform = driver.opts.platformName.toLowerCase()
 
         const b64Screenshot = await driver.getScreenshot()
@@ -176,10 +184,10 @@ export class AppiumOcrPlugin extends BasePlugin {
             DEFAULT_CONTRAST
 
         // convert to grayscale and apply contrast to make it easier for tesseract
-        jimpImage = await jimpImage.greyscale().contrast(contrast)
+        let intermediateJimp = jimpImage.greyscale().contrast(contrast)
 
         if (shouldInvertColors) {
-            jimpImage = await jimpImage.invert()
+            intermediateJimp = jimpImage.invert()
         }
 
         if (downsampleFactor) {
@@ -188,7 +196,7 @@ export class AppiumOcrPlugin extends BasePlugin {
             const newWidth = curWidth / downsampleFactor
             const newHeight = curHeight / downsampleFactor
             this.logger.info(`Resizing image from ${curWidth}x${curHeight} to ${newWidth}x${newHeight}`)
-            const resizedImage = await jimpImage.resize(newWidth, newHeight)
+            const resizedImage = intermediateJimp.resize(newWidth, newHeight) as unknown as AppiumJimp
             image = await resizedImage.getBuffer(imageUtil.MIME_PNG)
 
             shotToScreenRatio = shotToScreenRatio / downsampleFactor
