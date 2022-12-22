@@ -1,8 +1,8 @@
-import BasePlugin from '@appium/base-plugin'
-import type { BaseDriver } from '@appium/base-driver'
+import BasePlugin from 'appium/plugin'
+import type { ExternalDriver } from '@appium/types'
 import { createWorker, Worker, Word, Line, Block, Bbox, Page, PSM } from 'tesseract.js'
 import path from 'path'
-import { imageUtil } from '@appium/support'
+import { imageUtil } from 'appium/support'
 import {
     shouldAvoidProxy,
     getContexts,
@@ -114,7 +114,7 @@ export class AppiumOcrPlugin extends BasePlugin {
         },
     }
 
-    async readyWorker(driver: BaseDriver) {
+    async readyWorker(driver: ExternalDriver) {
         await this.worker.load()
         let lang = (await driver.getSettings()).ocrLanguage as string
         let validChars = (await driver.getSettings()).ocrValidChars as string
@@ -149,7 +149,7 @@ export class AppiumOcrPlugin extends BasePlugin {
         }
     }
 
-    async getOcrText(_: NextHandler, driver: BaseDriver): Promise<OcrResponse> {
+    async getOcrText(_: NextHandler, driver: ExternalDriver): Promise<OcrResponse> {
         if (!driver.getScreenshot) {
             throw new Error(`This type of driver does not have a screenshot command defined; ` +
                 `screenshot taking is necessary for this plugin to work!`)

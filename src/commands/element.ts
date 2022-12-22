@@ -1,10 +1,10 @@
 import { AppiumOcrPlugin, NextHandler } from '..'
 import type { Bbox } from 'tesseract.js'
-import { util } from '@appium/support'
-import { BaseDriver } from '@appium/base-driver'
+import { util } from 'appium/support'
+import type { ExternalDriver } from '@appium/types';
 
 // for some reason tsc can't find the errors export from basedriver, but it's there
-import * as bdStar from '@appium/base-driver'
+import * as bdStar from 'appium/driver'
 const { errors } = bdStar as {[name: string]: any}
 
 
@@ -71,7 +71,7 @@ export async function ocrElementGuard(this: AppiumOcrPlugin, next: NextHandler, 
     })
 }
 
-export async function click(this: AppiumOcrPlugin, next: NextHandler, driver: BaseDriver, elId: string) {
+export async function click(this: AppiumOcrPlugin, next: NextHandler, driver: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => {
         const {x, y} = el.center
         this.logger.info(`Will tap on image element at coordinate [${x}, ${y}]`)
@@ -97,27 +97,27 @@ export async function click(this: AppiumOcrPlugin, next: NextHandler, driver: Ba
     })
 }
 
-export async function elementDisplayed(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, elId: string) {
+export async function elementDisplayed(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async () => true)
 }
 
-export async function getSize(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, elId: string) {
+export async function getSize(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => el.size)
 }
 
-export async function getLocation(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, elId: string) {
+export async function getLocation(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => el.location)
 }
 
-export async function getElementRect(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, elId: string) {
+export async function getElementRect(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => el.rect)
 }
 
-export async function getText(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, elId: string) {
+export async function getText(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => el.text)
 }
 
-export async function getAttribute(this: AppiumOcrPlugin, next: NextHandler, _: BaseDriver, attr: string, elId: string) {
+export async function getAttribute(this: AppiumOcrPlugin, next: NextHandler, _: ExternalDriver, attr: string, elId: string) {
     return await this.ocrElementGuard(next, elId, async (el) => {
         if (attr !== 'confidence') {
             throw new Error(`Unsupported OCR element attribute '${attr}'`)

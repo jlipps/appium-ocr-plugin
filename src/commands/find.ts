@@ -1,22 +1,22 @@
 import { AppiumOcrPlugin, NextHandler } from '..'
-import { BaseDriver } from '@appium/base-driver'
+import type { ExternalDriver } from '@appium/types';
 import { select as xpathQuery } from 'xpath'
 import { DOMParser } from 'xmldom'
 import { OCRElement } from './element'
 
 // for some reason tsc can't find the errors export from basedriver, but it's there
-import * as bdStar from '@appium/base-driver'
+import * as bdStar from 'appium/driver'
 const { errors } = bdStar as {[name: string]: any}
 
-export async function findElement(this: AppiumOcrPlugin, next: NextHandler, driver: BaseDriver, strategy: string, selector: string) {
+export async function findElement(this: AppiumOcrPlugin, next: NextHandler, driver: ExternalDriver, strategy: string, selector: string) {
     return await this._find(next, driver, strategy, selector, false)
 }
 
-export async function findElements(this: AppiumOcrPlugin, next: NextHandler, driver: BaseDriver, strategy: string, selector: string) {
+export async function findElements(this: AppiumOcrPlugin, next: NextHandler, driver: ExternalDriver, strategy: string, selector: string) {
     return await this._find(next, driver, strategy, selector, true)
 }
 
-export async function _find(this: AppiumOcrPlugin, next: NextHandler, driver: BaseDriver, strategy: string, selector: string, multiple: boolean) {
+export async function _find(this: AppiumOcrPlugin, next: NextHandler, driver: ExternalDriver, strategy: string, selector: string, multiple: boolean) {
     return await this.ocrContextGuard(next, async () => {
         if (strategy !== 'xpath') {
             throw new errors.InvalidArgumentError(`The OCR context only supports the 'xpath' locator strategy`)

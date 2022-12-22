@@ -37,13 +37,13 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@appium/base-driver": "^8.2.3",
-    "@appium/base-plugin": "^1.8.0",
-    "@appium/support": "^2.55.3",
     "lodash": "^4.17.21",
     "tesseract.js": "^2.1.5",
     "xmldom": "^0.6.0",
     "xpath": "^0.0.32"
+  },
+  "peerDependencies": {
+    "appium": "^2.0.0-beta.48"
   },
   "scripts": {
     "clean": "rm -rf package-lock.json && rm -rf node_modules && npm install",

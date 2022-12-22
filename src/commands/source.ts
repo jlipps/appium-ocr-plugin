@@ -1,4 +1,4 @@
-import type { BaseDriver } from '@appium/base-driver'
+import type { ExternalDriver } from '@appium/types';
 import { AppiumOcrPlugin, OcrResponse, OcrData, NextHandler } from '..'
 import { escape } from 'lodash'
 
@@ -30,7 +30,7 @@ function converOcrToXml(ocr: OcrResponse): string {
            `<OCR>\n${words}\n${lines}\n${blocks}\n</OCR>`
 }
 
-export async function getPageSource(this: AppiumOcrPlugin, next: NextHandler, driver: BaseDriver) {
+export async function getPageSource(this: AppiumOcrPlugin, next: NextHandler, driver: ExternalDriver) {
     if (!this.isInOcrContext) {
         return await next()
     }

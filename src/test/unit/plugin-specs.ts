@@ -1,5 +1,5 @@
 import { AppiumOcrPlugin } from '../..'
-import { BaseDriver } from '@appium/base-driver'
+import { BaseDriver } from 'appium/driver'
 import { expect } from 'earljs'
 
 describe('AppiumOcrPlugin', function() {
