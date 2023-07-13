@@ -3,7 +3,7 @@ import { OCR_CONTEXT, OcrResponse } from '../..'
 import { remote } from 'webdriverio'
 import type { Element } from 'webdriverio'
 import { command } from 'webdriver'
-import { expect } from 'earljs'
+import { expect } from 'earl'
 
 const TEST_APP_PATH = process.env.TEST_APP_PATH
 const TEST_PLATFORM = process.env.TEST_PLATFORM || 'iOS'
@@ -12,7 +12,7 @@ if (!TEST_APP_PATH) {
     throw new Error(`Must define TEST_APP_PATH`)
 }
 
-interface PluginDriver extends Browser<'async'> {
+interface PluginDriver extends Browser {
     getOcrText: () => Promise<OcrResponse>
 }
 
@@ -27,7 +27,7 @@ if (TEST_PLATFORM === 'iOS') {
         platformName: 'iOS',
         'appium:automationName': 'XCUITest',
         'appium:platformVersion': '16.2',
-        'appium:deviceName': 'iPhone 13',
+        'appium:deviceName': 'iPhone 14',
     }
 } else {
     capabilities = {
@@ -40,7 +40,7 @@ if (TEST_PLATFORM === 'iOS') {
 }
 
 const WDIO_PARAMS: RemoteOptions = {
-    hostname: 'localhost',
+    hostname: '127.0.0.1',
     port: 4723,
     path: '/',
     connectionRetryCount: 0,
@@ -48,7 +48,7 @@ const WDIO_PARAMS: RemoteOptions = {
     capabilities
 }
 
-function updateWdioBrowser(browser: Browser<'async'>) {
+function updateWdioBrowser(browser: Browser) {
     browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr', {
         command: 'getOcrText',
         description: 'Get all OCR text',
@@ -69,7 +69,7 @@ describe('AppiumOcrPlugin', function() {
         await driver.$('~Login Screen').waitForExist({ timeout: 5000 })
         const ocr = await driver.getOcrText()
         const lines = ocr.lines.filter((l) => l.text.includes('Login Screen'))
-        expect(lines).toBeAnArrayOfLength(1)
+        expect(lines).toHaveLength(1)
         expect(lines[0].confidence).toBeGreaterThan(0)
         expect(lines[0].bbox.x0).toBeGreaterThan(0)
         expect(lines[0].bbox.x1).toBeGreaterThan(0)
@@ -79,7 +79,7 @@ describe('AppiumOcrPlugin', function() {
 
     it('should add a new context to the context list', async function() {
         const contexts = await driver.getContexts()
-        expect(contexts).toBeAContainerWith(OCR_CONTEXT)
+        expect(contexts).toInclude(OCR_CONTEXT)
     })
 
     describe('when in the ocr context', function() {
@@ -93,9 +93,9 @@ describe('AppiumOcrPlugin', function() {
 
         it('should get the ocr text in xml format', async function() {
             const source = await driver.getPageSource()
-            expect(source).toEqual(expect.stringMatching('<OCR>'))
-            expect(source).toEqual(expect.stringMatching('<words>'))
-            expect(source).toEqual(expect.stringMatching('<lines>'))
+            expect(source).toEqual(expect.regex(/<OCR>/))
+            expect(source).toEqual(expect.regex(/<words>/))
+            expect(source).toEqual(expect.regex(/<lines>/))
         })
 
         it('should find single ocr elements by xpath', async function() {
@@ -113,14 +113,14 @@ describe('AppiumOcrPlugin', function() {
         })
 
         describe('with an element', function() {
-            let el: Element<'async'>
+            let el: Element
             const targetSize = {
-                width: expect.numberCloseTo(101, { delta: 5 }),
-                height: expect.numberCloseTo(16, { delta: 5 })
+                width: expect.closeTo(95, 5),
+                height: expect.closeTo(16, 5)
             }
             const targetLoc = {
-                x: expect.numberCloseTo(21, { delta: 5 }),
-                y: expect.numberCloseTo(197, { delta: 5 }),
+                x: expect.closeTo(15, 5),
+                y: expect.closeTo(170, 5),
             }
             before(async function() {
                 el = await driver.$('//lines/item[contains(text(), "Login Screen")]')
@@ -143,7 +143,7 @@ describe('AppiumOcrPlugin', function() {
             })
 
             it('should get the text', async function() {
-                expect(await el.getText()).toEqual(expect.stringMatching('Login Screen'))
+                expect(await el.getText()).toEqual(expect.regex(/Login Screen/))
             })
 
             it('should get the confidence attribute', async function() {
@@ -164,6 +164,8 @@ describe('AppiumOcrPlugin', function() {
     })
 
     after(async function() {
-        await driver.deleteSession()
+        if (driver) {
+            await driver.deleteSession()
+        }
     })
 })
