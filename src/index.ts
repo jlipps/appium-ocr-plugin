@@ -1,9 +1,8 @@
 import { BasePlugin } from 'appium/plugin'
 import type { ExternalDriver } from '@appium/types'
-import type Jimp from 'jimp'
+import sharp from 'sharp';
 import { createWorker, Worker, Word, Line, Block, Bbox, Page, PSM } from 'tesseract.js'
 import path from 'path'
-import { imageUtil } from 'appium/support'
 import {
     shouldAvoidProxy,
     getContexts,
@@ -24,7 +23,9 @@ import {
 } from './commands'
 import { OCRElement } from './commands/element'
 
-type AppiumJimp = Omit<Jimp,'getBuffer'> & {getBuffer: Jimp['getBufferAsync']}
+interface SettingsDriver {
+    getSettings: () => Promise<Record<string, any>>
+}
 
 // Tesseract allows language codes to prime the OCR engine. Set the default to just English. Can be
 // overridden with the 'ocrLanguage' driver setting
@@ -73,7 +74,7 @@ export type OcrResponse = {
 
 export class AppiumOcrPlugin extends BasePlugin {
 
-    worker: Worker
+    worker?: Worker
     isInOcrContext = false
     isWorkerReady = false
     ocrElements: { [id: string]: OCRElement }
@@ -97,10 +98,6 @@ export class AppiumOcrPlugin extends BasePlugin {
 
     constructor(name: string) {
         super(name)
-        this.worker = createWorker({
-            logger: x => this.logger.debug(JSON.stringify(x)),
-            cachePath: CACHE_PATH,
-        })
         this.ocrElements = {}
     }
 
@@ -117,8 +114,11 @@ export class AppiumOcrPlugin extends BasePlugin {
         },
     }
 
-    async readyWorker(driver: ExternalDriver) {
-        await this.worker.load()
+    async readyWorker(driver: SettingsDriver) {
+        this.worker = await createWorker({
+            logger: x => this.logger.debug(JSON.stringify(x)),
+            cachePath: CACHE_PATH,
+        })
         let lang = (await driver.getSettings()).ocrLanguage as string
         let validChars = (await driver.getSettings()).ocrValidChars as string
         lang = lang || DEFAULT_LANG
@@ -148,7 +148,7 @@ export class AppiumOcrPlugin extends BasePlugin {
         return {
             words: extractFields(data.words),
             lines: extractFields(data.lines),
-            blocks: extractFields(data.blocks),
+            blocks: extractFields(data.blocks ?? []),
         }
     }
 
@@ -166,7 +166,7 @@ export class AppiumOcrPlugin extends BasePlugin {
 
         const b64Screenshot = await driver.getScreenshot()
         let image = Buffer.from(b64Screenshot, 'base64')
-        let jimpImage = await imageUtil.getJimpImage(image)
+        let sharpImage = sharp(image)
 
         let shotToScreenRatio = (driver.settings.getSettings().ocrShotToScreenRatio as number) ||
             SHOT_TO_SCREEN_RATIOS[platform] ||
@@ -184,20 +184,23 @@ export class AppiumOcrPlugin extends BasePlugin {
             DEFAULT_CONTRAST
 
         // convert to grayscale and apply contrast to make it easier for tesseract
-        let intermediateJimp = jimpImage.greyscale().contrast(contrast)
+        sharpImage = sharpImage.greyscale().linear(contrast, -(128 * contrast) + 128)
 
         if (shouldInvertColors) {
-            intermediateJimp = jimpImage.invert()
+            sharpImage = sharpImage.negate();
         }
 
         if (downsampleFactor) {
             this.logger.info(`Using downsample factor of ${downsampleFactor}`)
-            const { width: curWidth, height: curHeight } = jimpImage.bitmap
+            const { width: curWidth, height: curHeight } = await sharpImage.metadata();
+            if (!curWidth || !curHeight) {
+                throw new Error(`Could not get width/height metadata from image`)
+            }
             const newWidth = curWidth / downsampleFactor
             const newHeight = curHeight / downsampleFactor
             this.logger.info(`Resizing image from ${curWidth}x${curHeight} to ${newWidth}x${newHeight}`)
-            const resizedImage = intermediateJimp.resize(newWidth, newHeight) as unknown as AppiumJimp
-            image = await resizedImage.getBuffer(imageUtil.MIME_PNG)
+            const resizedImage = sharpImage.resize(newWidth, newHeight);
+            image = await resizedImage.toBuffer();
 
             shotToScreenRatio = shotToScreenRatio / downsampleFactor
             this.logger.info(`Adjusting screenshot-to-screen size ratio to ${shotToScreenRatio} to account for downsampling`)
@@ -207,6 +210,10 @@ export class AppiumOcrPlugin extends BasePlugin {
             await this.readyWorker(driver)
         }
 
+        if (!this.worker) {
+            throw new Error(`OCR worker was not initialized`);
+        }
+
         const { data } = await this.worker.recognize(image)
 
         return this.getOcrDataFromResponse(data, shotToScreenRatio)
@@ -214,7 +221,9 @@ export class AppiumOcrPlugin extends BasePlugin {
 
     async deleteSession(next: NextHandler) {
         try {
-            await this.worker.terminate()
+            if (this.worker) {
+                await this.worker.terminate()
+            }
         } finally {
             await next()
         }

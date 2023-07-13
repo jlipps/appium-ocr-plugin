@@ -12,7 +12,7 @@ if (!TEST_APP_PATH) {
     throw new Error(`Must define TEST_APP_PATH`)
 }
 
-interface PluginDriver extends Browser<'async'> {
+interface PluginDriver extends Browser {
     getOcrText: () => Promise<OcrResponse>
 }
 
@@ -48,7 +48,7 @@ const WDIO_PARAMS: RemoteOptions = {
     capabilities
 }
 
-function updateWdioBrowser(browser: Browser<'async'>) {
+function updateWdioBrowser(browser: Browser) {
     browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr', {
         command: 'getOcrText',
         description: 'Get all OCR text',
@@ -113,7 +113,7 @@ describe('AppiumOcrPlugin', function() {
         })
 
         describe('with an element', function() {
-            let el: Element<'async'>
+            let el: Element
             const targetSize = {
                 width: expect.numberCloseTo(101, { delta: 5 }),
                 height: expect.numberCloseTo(16, { delta: 5 })

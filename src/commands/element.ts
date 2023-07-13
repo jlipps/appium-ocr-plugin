@@ -2,10 +2,7 @@ import { AppiumOcrPlugin, NextHandler } from '..'
 import type { Bbox } from 'tesseract.js'
 import { util } from 'appium/support'
 import type { ExternalDriver } from '@appium/types';
-
-// for some reason tsc can't find the errors export from basedriver, but it's there
-import * as bdStar from 'appium/driver'
-const { errors } = bdStar as {[name: string]: any}
+import { errors } from 'appium/driver';
 
 
 export type Location = {
