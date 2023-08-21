@@ -1,5 +1,8 @@
 # Appium OCR Plugin
 
+[![npm version](http://img.shields.io/npm/v/appium-ocr-plugin.svg)](https://npmjs.org/package/appium-ocr-plugin)
+[![Downloads](http://img.shields.io/npm/dm/appium-ocr-plugin.svg)](https://npmjs.org/package/appium-ocr-plugin)
+
 This is a [Tesseract](https://github.com/tesseract-ocr/tesseract)-based OCR plugin for Appium. It relies on [Tesseract.js](https://tesseract.projectnaptha.com/) for the OCR processing.
 
 ## Features
