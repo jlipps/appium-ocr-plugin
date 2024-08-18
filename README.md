@@ -153,7 +153,15 @@ As an example of how this might be used, assuming we're in the OCR context and t
 const element = await driver.$('//lines/item[text() = "Echo Box"]')
 await element.click()
 ```
+Similarly, to click on an element using the OCR plugin in Appium-Python-Client, we could do the following:
 
+```py
+## To switch the context to OCR (if already not in OCR), use the following line:
+# driver.switch_to.context("OCR")
+
+element = driver.find_element(AppiumBy.XPATH,'//lines/item[text() = "Echo Box"]')
+element.click()
+```
 This clicks the center of the screen region where Tesseract has found the "Echo Box" text line to be located.
 
 ### Settings
