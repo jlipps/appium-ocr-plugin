@@ -186,7 +186,7 @@ export class AppiumOcrPlugin extends BasePlugin {
             sharpImage = sharpImage.negate();
         }
 
-        if (downsampleFactor) {
+        if (downsampleFactor && downsampleFactor !== 1) {
             this.logger.info(`Using downsample factor of ${downsampleFactor}`)
             const { width: curWidth, height: curHeight } = await sharpImage.metadata();
             if (!curWidth || !curHeight) {
