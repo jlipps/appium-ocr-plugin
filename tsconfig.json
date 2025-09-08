@@ -1,10 +1,11 @@
 {
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "@appium/tsconfig/tsconfig.json",
     "include": ["src/**/*"],
     "compilerOptions": {
         "noImplicitAny": true,
         "outDir": "build",
         "strict": true,
-        "inlineSourceMap": true,
         "allowJs": false,
         "declaration": true,
         "esModuleInterop": true,

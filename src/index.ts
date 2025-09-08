@@ -112,7 +112,7 @@ export class AppiumOcrPlugin extends BasePlugin {
 
     async readyWorker(driver: ExternalDriver) {
         this.worker = await createWorker({
-            logger: x => this.logger.debug(JSON.stringify(x)),
+            logger: x => this.log.debug(JSON.stringify(x)),
             cachePath: CACHE_PATH,
         })
         let lang = driver.settings.getSettings().ocrLanguage
@@ -167,7 +167,7 @@ export class AppiumOcrPlugin extends BasePlugin {
         let shotToScreenRatio = (driver.settings.getSettings().ocrShotToScreenRatio as number) ||
             SHOT_TO_SCREEN_RATIOS[platform] ||
             1.0
-        this.logger.info(`Using ${shotToScreenRatio} as the screenshot-to-screen size ratio`)
+        this.log.info(`Using ${shotToScreenRatio} as the screenshot-to-screen size ratio`)
 
         const downsampleFactor = (driver.settings.getSettings().ocrDownsampleFactor as number) ||
             DOWNSAMPLE_FACTORS[platform] ||
@@ -187,19 +187,19 @@ export class AppiumOcrPlugin extends BasePlugin {
         }
 
         if (downsampleFactor && downsampleFactor !== 1) {
-            this.logger.info(`Using downsample factor of ${downsampleFactor}`)
+            this.log.info(`Using downsample factor of ${downsampleFactor}`)
             const { width: curWidth, height: curHeight } = await sharpImage.metadata();
             if (!curWidth || !curHeight) {
                 throw new Error(`Could not get width/height metadata from image`)
             }
             const newWidth = Math.round(curWidth / downsampleFactor)
             const newHeight = Math.round(curHeight / downsampleFactor)
-            this.logger.info(`Resizing image from ${curWidth}x${curHeight} to ${newWidth}x${newHeight}`)
+            this.log.info(`Resizing image from ${curWidth}x${curHeight} to ${newWidth}x${newHeight}`)
             const resizedImage = sharpImage.resize(newWidth, newHeight); // convert to ints
-            image = await resizedImage.toBuffer();
+            image = Buffer.from(await resizedImage.toBuffer());
 
             shotToScreenRatio = shotToScreenRatio / downsampleFactor
-            this.logger.info(`Adjusting screenshot-to-screen size ratio to ${shotToScreenRatio} to account for downsampling`)
+            this.log.info(`Adjusting screenshot-to-screen size ratio to ${shotToScreenRatio} to account for downsampling`)
         }
 
         if (!this.isWorkerReady) {
