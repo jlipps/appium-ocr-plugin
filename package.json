@@ -58,7 +58,7 @@
     "@types/debug": "necessary because a subdep of wdio uses this package without typedefs so we have to import the typedefs ourself"
   },
   "devDependencies": {
-    "@appium/tsconfig": "^1.0.0-rc.1",
+    "@appium/tsconfig": "^1.0.0",
     "@types/bluebird": "^3.5.38",
     "@types/debug": "^4.1.8",
     "@types/express": "^4.17.13",
