@@ -26,8 +26,8 @@ if (TEST_PLATFORM === 'iOS') {
         ...capabilities,
         platformName: 'iOS',
         'appium:automationName': 'XCUITest',
-        'appium:platformVersion': '16.2',
-        'appium:deviceName': 'iPhone 14',
+        'appium:platformVersion': '18.0',
+        'appium:deviceName': 'iPhone 16',
     }
 } else {
     capabilities = {
@@ -115,12 +115,12 @@ describe('AppiumOcrPlugin', function() {
         describe('with an element', function() {
             let el: Element
             const targetSize = {
-                width: expect.closeTo(95, 5),
+                width: expect.closeTo(100, 5),
                 height: expect.closeTo(16, 5)
             }
             const targetLoc = {
-                x: expect.closeTo(15, 5),
-                y: expect.closeTo(170, 5),
+                x: expect.closeTo(20, 5),
+                y: expect.closeTo(200, 5),
             }
             before(async function() {
                 el = await driver.$('//lines/item[contains(text(), "Login Screen")]')

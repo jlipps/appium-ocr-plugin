@@ -1,7 +1,7 @@
 import { BasePlugin } from 'appium/plugin'
 import type { ExternalDriver } from '@appium/types'
 import sharp from 'sharp';
-import { createWorker, Worker, Word, Line, Block, Bbox, Page, PSM } from 'tesseract.js'
+import { createWorker, Worker, Block, Bbox, Page, PSM } from 'tesseract.js'
 import path from 'path'
 import {
     shouldAvoidProxy,
@@ -111,16 +111,17 @@ export class AppiumOcrPlugin extends BasePlugin {
     }
 
     async readyWorker(driver: ExternalDriver) {
-        this.worker = await createWorker({
-            logger: x => this.log.debug(JSON.stringify(x)),
-            cachePath: CACHE_PATH,
-        })
-        let lang = driver.settings.getSettings().ocrLanguage
-        let validChars = driver.settings.getSettings().ocrValidChars
-        lang = lang || DEFAULT_LANG
-        validChars = validChars || ''
-        await this.worker.loadLanguage(lang)
-        await this.worker.initialize(lang)
+        const lang = driver.settings.getSettings().ocrLanguage || DEFAULT_LANG
+        const validChars = driver.settings.getSettings().ocrValidChars || ''
+        this.worker = await createWorker(
+            lang,
+            undefined,
+            {
+                logger: x => this.log.debug(JSON.stringify(x)),
+                cachePath: CACHE_PATH,
+            }
+        )
+
         await this.worker.setParameters({
             tessedit_pageseg_mode: PSM.SPARSE_TEXT,
             tessedit_char_whitelist: validChars
@@ -129,23 +130,43 @@ export class AppiumOcrPlugin extends BasePlugin {
     }
 
     getOcrDataFromResponse(data: Page, shotToScreenRatio: number): OcrResponse {
-        function extractFields(dataSource: Word[] | Line[] | Block[]) {
-            return dataSource.map((s) => ({
-                text: s.text,
-                confidence: s.confidence,
-                bbox: {
-                    x0: s.bbox.x0 / shotToScreenRatio,
-                    y0: s.bbox.y0 / shotToScreenRatio,
-                    x1: s.bbox.x1 / shotToScreenRatio,
-                    y1: s.bbox.y1 / shotToScreenRatio,
+        const scaleBbox = (bbox: Bbox) => ({
+            x0: bbox.x0 / shotToScreenRatio,
+            y0: bbox.y0 / shotToScreenRatio,
+            x1: bbox.x1 / shotToScreenRatio,
+            y1: bbox.y1 / shotToScreenRatio,
+        })
+
+        const blocks: OcrData[] = (data.blocks ?? []).map((block: Block) => ({
+            text: block.text,
+            confidence: block.confidence,
+            bbox: scaleBbox(block.bbox),
+        }))
+
+        const lines: OcrData[] = []
+        const words: OcrData[] = []
+
+        for (const block of data.blocks ?? []) {
+            for (const paragraph of block.paragraphs ?? []) {
+                for (const line of paragraph.lines ?? []) {
+                    lines.push({
+                        text: line.text,
+                        confidence: line.confidence,
+                        bbox: scaleBbox(line.bbox),
+                    })
+
+                    for (const word of line.words ?? []) {
+                        words.push({
+                            text: word.text,
+                            confidence: word.confidence,
+                            bbox: scaleBbox(word.bbox),
+                        })
+                    }
                 }
-            }))
+            }
         }
-        return {
-            words: extractFields(data.words),
-            lines: extractFields(data.lines),
-            blocks: extractFields(data.blocks ?? []),
-        }
+
+        return { words, lines, blocks }
     }
 
     async getOcrText(_: NextHandler, driver: ExternalDriver): Promise<OcrResponse> {
@@ -210,7 +231,7 @@ export class AppiumOcrPlugin extends BasePlugin {
             throw new Error(`OCR worker was not initialized`);
         }
 
-        const { data } = await this.worker.recognize(image)
+        const { data } = await this.worker.recognize(image, {}, { blocks: true })
 
         return this.getOcrDataFromResponse(data, shotToScreenRatio)
     }
